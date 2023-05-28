@@ -1,0 +1,146 @@
+{% set title = book.title %}
+{% set authors = book.authors %}
+{% set average_rating = book.average_rating %}
+{% set language_code = book.language_code %}
+{% set num_pages = book.num_pages %}
+{% set ratings_count = book.ratings_count %}
+{% set text_reviews_count = book.text_reviews_count %}
+{% set publication_date = book.publication_date %}
+{% set publisher = book.publisher %}
+{% set quantity = book.quantity %}
+
+{% include "header.html" %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+            <h5 class="card-title fw-semibold mb-4">Edit Book</h5>
+            <div class="card">
+              <div class="card-body">
+                <form action="/book/{{ book.id }}" id="editBookForm" data-book-id="{{ book.id }}" method="PUT">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="title" name="title" value="{{ title }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="authors" class="form-label">Authors</label>
+                        <input type="text" class="form-control" id="authors" name="authors" value="{{ authors }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="average_rating" class="form-label">Average Rating</label>
+                        <input type="number" step="0.01" class="form-control" id="average_rating" name="average_rating" value="{{ average_rating }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="language_code" class="form-label">Language Code</label>
+                        <input type="text" class="form-control" id="language_code" name="language_code" value="{{ language_code }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="num_pages" class="form-label">Number of Pages</label>
+                        <input type="number" class="form-control" id="num_pages" name="num_pages" value="{{ num_pages }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="ratings_count" class="form-label">Ratings Count</label>
+                        <input type="number" class="form-control" id="ratings_count" name="ratings_count" value="{{ ratings_count }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="text_reviews_count" class="form-label">Text Reviews Count</label>
+                        <input type="number" class="form-control" id="text_reviews_count" name="text_reviews_count" value="{{ text_reviews_count }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="publication_date" class="form-label">Publication Date</label>
+                        <input type="date" class="form-control" id="publication_date" name="publication_date" value="{{ publication_date }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="publisher" class="form-label">Publisher</label>
+                        <input type="text" class="form-control" id="publisher" name="publisher" value="{{ publisher }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" value="{{ quantity }}">
+                    </div>
+                    <button type="submit" id="updateBookBtn" class="btn btn-primary">Update</button>
+                </form>
+              </div>
+            </div>
+            </div>
+        </div>
+</div>
+<div id="updateModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateModalLabel">Update Successful</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                The book has been updated successfully.
+            </div>
+            <div class="modal-footer">
+                <a href="/books" class="btn btn-primary">OK</a>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="errorModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                There was an error updating the book. Please try again later.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+<script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+<script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+<script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+<script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+<script>
+    $(document).ready(function() {
+        $("#updateBookBtn").on("click", function(event) {
+            event.preventDefault();
+            var bookId = $("#editBookForm").data("book-id");
+            var formData = {
+                title: $("#title").val(),
+                authors: $("#authors").val(),
+                average_rating: parseFloat($("#average_rating").val()),
+                language_code: $("#language_code").val(),
+                num_pages: parseInt($("#num_pages").val()),
+                ratings_count: parseInt($("#ratings_count").val()),
+                text_reviews_count: parseInt($("#text_reviews_count").val()),
+                publication_date: $("#publication_date").val(),
+                publisher: $("#publisher").val(),
+                quantity: parseInt($("#quantity").val())
+            };
+            var quantity = parseInt($("#quantity").val());
+            formData = JSON.stringify(formData)
+            $.ajax({
+                url: "/books/" + bookId,
+                type: "PUT",
+                data: JSON.stringify({book: formData, quantity: quantity}),
+                contentType: "application/json",
+                success: function(response) {
+                    // Show success modal
+                    $("#updateModal").modal("show");
+                },
+                error: function(xhr, status, error) {
+                    // Show error modal
+                    $("#errorModal").modal("show");
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
+{% endblock %}

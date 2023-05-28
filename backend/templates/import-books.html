@@ -1,0 +1,139 @@
+{% set page = request.args.get('page', 1) | int %}
+{% set total_pages = 200 %}
+{% include "header.html" %}
+{% block body %}
+        <div class="container-fluid">
+            <h1>Import Books</h1>
+            <form action="/import-books" method="get">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><input type="text" class="form-control" name="title" placeholder="Title" value="{{title}}"></th>
+                            <th><input type="text" class="form-control" name="authors" placeholder="Authors" value="{{authors}}"></th>
+                            <th><button type="submit" class="form-control btn btn-info m-1">Search</button></th>
+                        </tr>
+                    </thead>
+                </table>
+            </form>
+            <form id="book-form" action="/import-books" method="post">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Authors</th>
+                            <th>ISBN</th>
+                            <th>Publisher</th>
+                            <th>Select All <input type="checkbox" class="form-check-input" id="check-all"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in books %}
+                            <tr>
+                                <td>{{ book.title }}</td>
+                                <td>{{ book.authors }}</td>
+                                <td>{{ book.isbn }}</td>
+                                <td>{{ book.publisher }}</td>
+                                {% if book.exists_in_database %}
+                                    <td>
+                                        <button type="submit" class="form-control btn btn-success m-1" disabled>Already in Database</button>
+                                    </td>
+                                {% else %}
+                                    <td> <input type="checkbox" name="selected_books[]" class="form-check-input" value="{{ book }}"></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <li class="page-item{% if page == 1 %} disabled{% endif %}">
+                                <a class="page-link" href="/import-books?page={{page - 1}}&title={{title}}&authors={{authors}}">Previous</a>
+                            </li>
+                            {% for i in range(page-4, page + 4) %}
+                                {% if i <= total_pages and i > 0 %}
+                                    <li class="page-item{% if page == i %} active{% endif %}">
+                                        <a class="page-link" href="/import-books?page={{ i }}&title={{title}}&authors={{authors}}">{{ i }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            <li class="page-item{% if page == total_pages %} disabled{% endif %}">
+                                <a class="page-link" href="/import-books?page={{ page + 1 }}&title={{title}}&authors={{authors}}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    <button type="button" class="btn btn-primary" id="send-button">Import Books in Library</button>
+                </div>
+            </form>
+
+        </div>
+      </div>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="success-modal" tabindex="-1" aria-labelledby="success-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="success-modal-label">Import Successful</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>The selected books have been imported successfully.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="okay-button" class="btn btn-primary" data-bs-dismiss="modal">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+        <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+        <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+        <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+        <script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+        <script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+        <script>
+            $(document).ready(function() {
+                $("#send-button").on("click", function(e) {
+                    // e.preventDefault();
+                    var selectedBooks = [];
+                    console.log("here");
+                    $("input[name='selected_books[]']:checked").each(function() {
+                        selectedBooks.push($(this).val());
+                        console.log($(this).val())
+                    });
+                    console.log(selectedBooks);
+                    // Send the selected books via a POST request to the endpoint
+                    $.ajax({
+                        url: "/import-books",
+                        type: "POST",
+                        data: JSON.stringify(selectedBooks),
+                        contentType: "application/json; charset=utf-8",
+                        success: function(response) {
+                            // Handle the response
+                            $("#success-modal").modal('show'); // Open the success modal
+                            // Clear the checkboxes
+                            // $("input[name='selected_books[]']").prop("checked", false);
+                            // Refresh the page
+                            // location.reload();
+                        },
+                        error: function(xhr, status, error) {
+                            // Handle the error
+                        }
+                    });
+                });
+                $("#check-all").change(function() {
+                    $("input[name='selected_books[]']").prop("checked", $(this).prop("checked"));
+                });
+                $("#okay-button").on("click", function(e) {
+                    // Clear the checkboxes
+                    $("input[name='selected_books[]']").prop("checked", false);
+                    // Refresh the page
+                    location.reload();
+                });
+
+            });
+        </script>
+        </body>
+        
+        </html>
+{% endblock %}
