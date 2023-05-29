@@ -1,0 +1,123 @@
+{% set member_id = member.id if is_edit else '' %}
+{% set name = member.name if is_edit else '' %}
+{% set email = member.email if is_edit else '' %}
+{% set phone_number = member.phone_number if is_edit else '' %}
+{% set address = member.address if is_edit else '' %}
+{% set outstanding_debt = member.outstanding_debt if is_edit else 0 %}
+
+{% include "header.html" %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title fw-semibold mb-4">{{ "Edit" if is_edit else "Add" }} Member</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <div id="alertContainer"></div>
+                        <div id="addMemberFormContainer">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ name }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ email }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone_number" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone_number" name="phone_number" value="{{ phone_number }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Address</label>
+                                <input type="text" class="form-control" id="address" name="address" value="{{ address }}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="outstanding_debt" class="form-label">Outstanding Debt</label>
+                                <input type="number" class="form-control" id="outstanding_debt" name="outstanding_debt" value="{{ outstanding_debt }}">
+                            </div>
+                            <button type="button" id="addMemberBtn" class="btn btn-primary">{{ "Update" if is_edit else "Add" }}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="successModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                The member has been {{ "updated" if is_edit else "added" }} successfully.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="errorModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                There was an error {{ "updating" if is_edit else "adding" }} the member. Please try again later.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+<script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+<script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+<script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+<script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+<script>
+    $(document).ready(function() {
+        $("#addMemberBtn").on("click", function() {
+            var name = $("#name").val();
+            var email = $("#email").val();
+            var phone_number = $("#phone_number").val();
+            var address = $("#address").val();
+            var outstanding_debt = parseInt($("#outstanding_debt").val());
+
+            var data = {
+                name: name,
+                email: email,
+                phone_number: phone_number,
+                address: address,
+                outstanding_debt: outstanding_debt
+            };
+            // var url = "/";
+            var url = "{{ url_for('member.update_member', id=member.id) if is_edit else url_for('member.create_member') }}";
+            console.log(url);
+            $.ajax({
+                url: url,
+                type: "{{ 'PUT' if is_edit else 'POST' }}",
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(response) {
+                    // Show success modal
+                    $("#successModal").modal("show");
+                },
+                error: function(xhr, status, error) {
+                    // Show error modal
+                    $("#errorModal").modal("show");
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
+{% endblock %}
