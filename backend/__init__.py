@@ -14,4 +14,5 @@ def create_app():
     app.register_blueprint(member)
     app.register_blueprint(book)
     app.register_blueprint(index)
+    app.register_blueprint(rental)
     return app

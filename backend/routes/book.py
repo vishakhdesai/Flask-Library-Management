@@ -126,7 +126,7 @@ def create_books():
                 return jsonify({"message": "ISBN13 is required"}), 400
             if not book["language_code"]:
                 return jsonify({"message": "Language code is required"}), 400
-            if not book["num_pages"]:
+            if not book["  num_pages"]:
                 return jsonify({"message": "Number of pages is required"}), 400
             if not book["publication_date"]:
                 return jsonify({"message": "Publication date is required"}), 400
@@ -148,7 +148,7 @@ def create_books():
                 ratings_count=ratings_count,
                 isbn13=book["isbn13"], 
                 language_code=book["language_code"], 
-                num_pages=book["num_pages"], 
+                num_pages=book["  num_pages"], 
                 publication_date=publication_date, 
                 publisher=book["publisher"],
                 quantity=0

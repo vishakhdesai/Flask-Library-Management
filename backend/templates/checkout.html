@@ -1,0 +1,106 @@
+{% include "header.html" %}
+{% block body %}
+    <div class="container">
+        <h1>Checkout</h1>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Authors</th>
+                    <th>Rental Fee/Day</th>
+                    <th>Remove from Rental List</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                    <tr data-book-id="{{ book.id }}" data-book ="{{book}}">
+                        <td>{{ book.title }}</td>
+                        <td>{{ book.authors }}</td>
+                        <td><div class="d-inline-flex">₹<input type="number" id="fee-per-day" min="10" value="10"></div></td>
+                        <td>
+                            <button class="btn btn-primary remove-button">Remove</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button class="btn btn-primary issue-books-button">Issue Books</button>
+    </div>
+    <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="successModalLabel">Success!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Books issued successfully.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="okayButton" data-bs-dismiss="modal">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+    <script>
+        $(document).ready(function() {
+            $(".remove-button").on("click", function(e) {
+                var selectedBookId = $(this).closest("tr").data("book-id");
+                let url = "{{url_for('rental.remove_from_rental_list', member_id=member_id)}}"
+                console.log(url);
+                $.ajax({
+                    url: url,
+                    type: "DELETE",
+                    contentType: "application/json",
+                    data: JSON.stringify({bookId: selectedBookId}),
+                    success: function(response) {
+                        console.log("success");
+                        location.reload(); 
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error", error);
+                    }
+                });
+            });
+
+
+            $(".issue-books-button").on("click", function(e) {
+                
+                var books = [];
+                $("input[id='fee-per-day']").each(function() {
+                    var selectedBookId = $(this).closest("tr").data("book-id");
+                    console.log(selectedBookId);
+                    var fee = $(this).val();
+                    books.push({bookId: selectedBookId, fee: fee});
+                });
+                let url = "{{url_for('rental.issue_books', member_id=member_id)}}"
+                console.log(url);
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({books: books}),
+                    success: function(response) {
+                        $("#successModal").modal("show");
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error", error);
+                    }
+                });
+            });
+            $("#okayButton").on("click", function() {
+                window.location.href = "/";
+            });
+        });
+    </script>
+    </body>
+    </html>
+{% endblock %}

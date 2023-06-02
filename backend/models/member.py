@@ -9,3 +9,4 @@ class Member(db.Model):
     phone_number = db.Column(db.String(100))
     address = db.Column(db.String(100))
     outstanding_debt = db.Column(db.Integer)
+    issue_list = db.Column(db.String(255))

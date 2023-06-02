@@ -1,0 +1,167 @@
+{% include "header.html" %}
+{% block body %}
+    <div class="container">
+        <h1>Rentals</h1>
+        {% for rental in rentals %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ rental.member.name }}</h5>
+                    <p class="card-text"> Issue Date - {{ rental.start_date }}</p>
+                    <div class="card-text">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Book Title</th>
+                                    <th>Author</th>
+                                    <th>Fee</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for book_rental in rental.book_rentals %}
+                                    <tr>
+                                        <td>{{ book_rental.book.title }}</td>
+                                        <td>{{ book_rental.book.authors }}</td>
+                                        <td>₹{{ book_rental.rent_fee }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card-text">
+                        <form data-rental-id="{{ rental.id }}">
+                            <div class="form-group">
+                                <label for="return_date">Return Date:</label>
+                                <input type="date" class="form-control" id="return_date" name="return_date" onchange="enableReturnButton(this)">
+                            </div>
+                            <button type="button" class="btn btn-primary return-button" disabled>Return Book(s)</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="totalFeeModal" tabindex="-1" aria-labelledby="totalFeeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="totalFeeModalLabel">Total Fee: <span id="totalFeeAmount"></span></h5>
+                    <p hidden><span id="rental_id"></span></p>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="paymentModal" class="form-label">Payment Amount:</label>
+                        <input type="number" class="form-control" id="paymentModal" name="paymentModal" min="0" step="0.01" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary return-book-button">Return Book(s)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="successModalLabel">Book Returned Successfully</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="location.reload()">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+    <script>
+        function enableReturnButton(select) {
+            var returnButton = $(select).closest("form").find(".return-button");
+            returnButton.prop("disabled", !select.value);  // Enable button if value is selected
+        }
+
+        $(document).ready(function() {
+            $(".return-button").on("click", function(e) {
+                var form = $(this).closest("form");
+                var rentalId = form.data("rental-id");
+                var returnDate = form.find("#return_date").val();
+                var payment = form.find("#payment").val();
+
+                $.ajax({
+                    url: "/calculate-total-fee/" + rentalId,
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({return_date: returnDate}),
+                    success: function(response) {
+                        var totalFee = response.total_fee;
+                        var paymentModalInput = $("#paymentModal");
+                        paymentModalInput.val("");  // Reset payment input
+
+                        if (totalFee > 500) {
+                            // Set minimum payment amount based on the condition
+                            var minimumAmount = totalFee - 500;
+                            paymentModalInput.attr("min", minimumAmount);
+                            paymentModalInput.val(minimumAmount);
+                        } else {
+                            paymentModalInput.attr("min", 0);
+                            paymentModalInput.val(0);
+                        }
+                        paymentModalInput.attr("max", totalFee);
+                        // Display total fee in the modal
+                        $("#totalFeeAmount").text(totalFee);
+                        $("#rental_id").val(rentalId)
+
+                        // Show the modal
+                        $("#totalFeeModal").modal("show");
+                    },
+                    error: function(error) {
+                        console.log("Error retrieving rental object:", error);
+                    }
+                });
+            });
+
+            $(".return-book-button").on("click", function(e) {
+                var rentalId = $("#rental_id").val();
+                var payment = parseFloat($("#paymentModal").val());
+                var paymentModalInput = $("#paymentModal");
+                var minPayment = parseFloat(paymentModalInput.attr("min"));
+                var maxPayment = parseFloat(paymentModalInput.attr("max"));
+                var paymentValue = parseFloat(paymentModalInput.val());
+
+                if (paymentValue < minPayment || paymentValue > maxPayment) {
+                    return;
+                }
+                // Make an API request to return the book with rentalId and payment amount
+                $.ajax({
+                    url: "/return-book/" + rentalId,
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({payment: payment, total_fee: maxPayment}),
+                    success: function(response) {
+                        // Handle success response and update the UI if needed
+                        console.log(response);
+                        // Close the modal
+                        $("#totalFeeModal").modal("hide");
+                        // Show the success modal
+                        $("#successModal").modal("show");
+                    },
+                    error: function(error) {
+                        console.log("Error returning book:", error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

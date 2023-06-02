@@ -3,7 +3,7 @@
 {% include "header.html" %}
 
 {% block body %}
-    <div class="container-fluid">
+    <div class="container">
         <h1>Library Members</h1>
         <form action="/members" method="get">
             <table>
@@ -26,6 +26,7 @@
                     <th>Outstanding Debt</th>
                     <th>Edit</th>
                     <th>Delete</th>
+                    <th>Rent Book</th>
                 </tr>
             </thead>
             <tbody>
@@ -39,6 +40,9 @@
                         <td><a href="/edit-member/{{ member.id }}" class="btn btn-primary">Edit</a></td>
                         <td>
                             <button class="btn btn-danger delete-button" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-success rent-button">Rent Book</button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -114,6 +118,12 @@
                         console.error("Error deleting member:", error);
                     }
                 });
+            });
+
+            $(".rent-button").on("click", function(e) {
+                var selectedMemberId = $(this).closest("tr").data("member-id");
+                console.log(selectedMemberId);
+                window.location.href = "/rent-books/" + selectedMemberId;
             });
         });
     </script>
