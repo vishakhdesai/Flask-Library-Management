@@ -11,8 +11,10 @@ index = Blueprint("index", __name__)
 @index.route("/", methods = ["GET"])
 def home():
     
-    top_rented_books = Book.query.order_by(Book.quantity.desc()).limit(10).all()
-
+    top_rented_books = Book.query.join(BookRental).group_by(Book.id).order_by(db.func.count(BookRental.id).desc()).all()
+    
+    for book in top_rented_books:
+        book.issued_times = len(book.book_rentals)
     top_debt_members = Member.query.order_by(Member.outstanding_debt.desc()).limit(10).all()
 
     top_rated_books = Book.query.order_by(Book.average_rating.desc()).limit(10).all()
