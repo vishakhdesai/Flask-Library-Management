@@ -2,7 +2,7 @@
 {% set total_pages = total_pages %}
 {% include "header.html" %}
 {% block body %}
-    <div class="container">
+    <div class="container" style="margin-top: 2rem;">
         <h1>Rent Books</h1>
         <form action="/rent-books/{{member_id}}" method="get">
             <table>
@@ -89,7 +89,24 @@
                 </div>
             </div>
         </div>
-    </div>8//
+    </div>
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
@@ -110,8 +127,10 @@
                         console.log("success");
                         location.reload(); 
                     },
-                    error: function(xhr, status, error) {
-                        console.error("Error", error);
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
                     }
                 });
             });
@@ -129,8 +148,10 @@
                         console.log("success");
                         location.reload(); 
                     },
-                    error: function(xhr, status, error) {
-                        console.error("Error", error);
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
                     }
                 });
             });

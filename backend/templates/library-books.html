@@ -2,8 +2,18 @@
 {% set total_pages = total_pages %}
 {% include "header.html" %}
 {% block body %}
-    <div class="container">
+    <div class="container" style="margin-top: 2rem;">
         <h1>Library Books</h1>
+        {% if books == [] %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">
+                    No Books imported yet
+                </h4>
+                <a href="/import-books" class="btn btn-primary">Import Books</a>
+            </div>
+        </div>
+        {% else %}
         <form action="/books" method="get">
             <table>
                 <thead>
@@ -87,6 +97,7 @@
                 </ul>
             </nav>
         </div>
+        {% endif %}
     </div>
 
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -102,6 +113,24 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Okay</button>
                 </div>
             </div>
         </div>
@@ -132,9 +161,11 @@
                         location.reload(); 
                         // Optionally, update the page or remove the deleted book row from the table
                     },
-                    error: function(xhr, status, error) {
-                        // Handle the error
-                        console.error("Error deleting book:", error);
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        // Display error modal with error message
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
                     }
                 });
             });
@@ -181,9 +212,11 @@
                         location.reload();
                         // Optionally, update the page or show a success message
                     },
-                    error: function(xhr, status, error) {
-                        // Handle the error
-                        console.error("Error updating book stock:", error);
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        // Display error modal with error message
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
                     }
                 });
             });

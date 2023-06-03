@@ -35,6 +35,7 @@ rental_schema = RentalSchema()
 
 # Create the routes
 
+
 @rental.route("/rent-books/<int:member_id>", methods=["GET"])
 def get_rent_book(member_id):
     try:
@@ -177,9 +178,17 @@ def issue_books(member_id):
 def view_rentals():
     try:
         rentals = Rental.query.filter(Rental.book_returned == False).all()
-        return render_template('rentals.html', rentals=rentals)
+        return render_template('rentals.html', rentals=rentals, returned=False)
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+    
+@rental.route('/rentals-returned')
+def view_returned_rentals():
+    try:
+        rentals = Rental.query.filter(Rental.book_returned == True).all()
+        return render_template('rentals.html', rentals=rentals, returned=True)
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500    
 
 @rental.route("/calculate-total-fee/<int:rental_id>", methods=["POST"])
 def calculate_total_fee(rental_id):
@@ -205,8 +214,13 @@ def return_book(rental_id):
         total_fee = request.json["total_fee"]
         rental.total_rent_fee = total_fee
         rental.book_returned = True
+        rental.end_date = request.json["return_date"]
         member = Member.query.get(rental.member_id)
         member.outstanding_debt += (total_fee - payment)
+        if(member.outstanding_debt > 500) :
+            extra_payment = member.outstanding_debt - 500
+            msg = "Extra Payment of ₹" + extra_payment + "is necessary to keep outstanding debt of member less than 500"
+            return jsonify({"message": msg}), 400
         for book_rental in rental.book_rentals:
             book = Book.query.get(book_rental.book_id)
             book.quantity += 1

@@ -4,6 +4,7 @@ from flask_marshmallow import Marshmallow
 from marshmallow_sqlalchemy import schema
 from ..extensions import db
 from ..models.member import Member
+from ..models.rental import Rental
 
 # Create the marshmallow schema
 class MemberSchema(schema.Schema):
@@ -39,7 +40,7 @@ def get_member(id):
     try:
         member = Member.query.get(id)
         if not member:
-            return jsonify({"message": "Member not found"}), 404
+            return render_template("404.html"), 404
         return jsonify(member_schema.dump(member)), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
@@ -84,7 +85,7 @@ def update_member(id):
     try:
         member = Member.query.get(id)
         if not member:
-            return jsonify({"message": "Member not found"}), 404
+            return render_template("404.html"), 404
 
         data = request.json
         if not data.get("name"):
@@ -117,9 +118,11 @@ def update_member(id):
 def delete_member(id):
     try:
         member = Member.query.get(id)
+        rentals = Rental.query.filter(Rental.member_id==member.id, Rental.book_returned==False).all()
         if not member:
-            return jsonify({"message": "Member not found"}), 404
-
+            return render_template("404.html"), 404
+        if len(rentals) > 0:
+            return jsonify({"message": "Cannot delete member as the member have issued books"}), 400
         db.session.delete(member)
         db.session.commit()
 

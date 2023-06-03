@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, render_template
 from .extensions import db, migrate
 from .routes.member import member
 from .routes.book import book
@@ -19,6 +19,10 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    @app.errorhandler(404)
+    def page_not_found(error):
+        return render_template('404.html'), 404
     app.register_blueprint(member)
     app.register_blueprint(book)
     app.register_blueprint(index)

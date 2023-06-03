@@ -97,7 +97,7 @@ def get_book(id):
     try:
         book = Book.query.get(id)
         if not book:
-            return jsonify({"message": "Book not found"}), 404
+            return render_template("404.html"), 404
 
         return render_template("book.html", book=book)
     except Exception as e:
@@ -170,7 +170,7 @@ def update_book(id):
 
         book = Book.query.get(id)
         if not book:
-            return jsonify({"message": "Book not found"}), 404
+            return render_template("404.html"), 404
 
         book.title = data["title"]
         book.authors = data["authors"]
@@ -193,7 +193,7 @@ def get_edit_book(id):
     try:
         book = Book.query.get(id)
         if not book:
-            return jsonify({"message": "Book not found"}), 404
+            return render_template("404.html"), 404
 
         return render_template("edit-book.html", book=book), 200
     except Exception as e:
@@ -204,7 +204,7 @@ def delete_book(id):
     try:
         book = Book.query.get(id)
         if not book:
-            return jsonify({"message": "Book not found"}), 404
+            return render_template("404.html"), 404
 
         db.session.delete(book)
         db.session.commit()

@@ -1,7 +1,16 @@
 {% include "header.html" %}
 {% block body %}
-    <div class="container">
-        <h1>Rentals</h1>
+    <div class="container" style="margin-top: 2rem;">
+        <h1>BOOKS ISSUED</h1>
+        {% if rentals == [] %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">
+                    No books issued yet
+                </h4>
+            </div>
+        </div>
+        {% endif %}
         {% for rental in rentals %}
             <div class="card mb-3">
                 <div class="card-body">
@@ -28,13 +37,22 @@
                         </table>
                     </div>
                     <div class="card-text">
-                        <form data-rental-id="{{ rental.id }}">
-                            <div class="form-group">
-                                <label for="return_date">Return Date:</label>
-                                <input type="date" class="form-control" id="return_date" name="return_date" onchange="enableReturnButton(this)">
+                        {% if not returned %}
+                            <form data-rental-id="{{ rental.id }}">
+                                <div class="form-group">
+                                    <label for="return_date">Return Date:</label>
+                                    <input type="date" class="form-control" id="return_date" name="return_date" onchange="enableReturnButton(this)">
+                                </div>
+                                <button type="button" class="btn btn-primary return-button" disabled>Return Book(s)</button>
+                            </form>
+                        {% else %}
+                            <div>
+                                Return Date: {{rental.end_date}}
                             </div>
-                            <button type="button" class="btn btn-primary return-button" disabled>Return Book(s)</button>
-                        </form>
+                            <div>
+                                Total Fee: {{rental.total_rent_fee}}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -48,6 +66,7 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="totalFeeModalLabel">Total Fee: <span id="totalFeeAmount"></span></h5>
                     <p hidden><span id="rental_id"></span></p>
+                    <p hidden><span id="book_return_date"></span></p>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -122,11 +141,11 @@
                     data: JSON.stringify({return_date: returnDate}),
                     success: function(response) {
                         var totalFee = response.total_fee;
+                        var memberOutstandingDebt = response.member_outstanding_debt;
                         var paymentModalInput = $("#paymentModal");
-                        paymentModalInput.val("");  // Reset payment input
+                        paymentModalInput.val("");  
 
                         if (totalFee > 500) {
-                            // Set minimum payment amount based on the condition
                             var minimumAmount = totalFee - 500;
                             paymentModalInput.attr("min", minimumAmount);
                             paymentModalInput.val(minimumAmount);
@@ -137,6 +156,7 @@
                         paymentModalInput.attr("max", totalFee);
                         // Display total fee in the modal
                         $("#totalFeeAmount").text(totalFee);
+                        $("#book_return_date").val(returnDate)
                         $("#rental_id").val(rentalId)
 
                         // Show the modal
@@ -155,6 +175,7 @@
                 var rentalId = $("#rental_id").val();
                 var payment = parseFloat($("#paymentModal").val());
                 var paymentModalInput = $("#paymentModal");
+                var returnDate = $("#book_return_date").val();
                 var minPayment = parseFloat(paymentModalInput.attr("min"));
                 var maxPayment = parseFloat(paymentModalInput.attr("max"));
                 var paymentValue = parseFloat(paymentModalInput.val());
@@ -167,7 +188,7 @@
                     url: "/return-book/" + rentalId,
                     method: "POST",
                     contentType: "application/json",
-                    data: JSON.stringify({payment: payment, total_fee: maxPayment}),
+                    data: JSON.stringify({payment: payment, total_fee: maxPayment, return_date: returnDate}),
                     success: function(response) {
                         // Handle success response and update the UI if needed
                         console.log(response);
