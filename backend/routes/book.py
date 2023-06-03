@@ -99,7 +99,7 @@ def get_book(id):
         if not book:
             return jsonify({"message": "Book not found"}), 404
 
-        return jsonify(book_schema.dump(book)), 200
+        return render_template("book.html", book=book)
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 

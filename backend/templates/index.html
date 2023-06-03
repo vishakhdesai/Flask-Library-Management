@@ -1,12 +1,65 @@
 {% include "header.html" %}
 {% block body %}
-<div class="body-wrapper">
     <div class="container">
-      <!--  Row 1 -->
-      <div class="row">
-
-      </div>
+        <h1>Library Management Dashboard</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Top 10 Most Rented Books</h5>
+                        <ul>
+                            {% for book in top_rented_books %}
+                                <li>{{ book.title }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Top Members with Most Outstanding Debt</h5>
+                        <ul>
+                            {% for member in top_debt_members %}
+                                <li>{{ member.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Top 10 Most Rated Books</h5>
+                        <ul>
+                            {% for book in top_rated_books %}
+                                <li>{{ book.title }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Top Members Who Rent Most Books</h5>
+                        <ul>
+                            {% for member in top_renting_members %}
+                                <li>{{ member.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
+    <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+</body>
+</html>
 {% endblock %}
-{% include "footer.html" %}

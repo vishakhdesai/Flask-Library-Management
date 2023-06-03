@@ -9,7 +9,6 @@ class Rental(db.Model):
     end_date = db.Column(db.Date)
     total_rent_fee = db.Column(db.Integer)
     book_returned = db.Column(db.Boolean)
-    payment = db.Column(db.Integer)
     
     member = db.relationship("Member", backref="members")
     

@@ -44,6 +44,24 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Error!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
@@ -63,17 +81,16 @@
                     data: JSON.stringify({bookId: selectedBookId}),
                     success: function(response) {
                         console.log("success");
-                        location.reload(); 
+                        location.reload();
                     },
                     error: function(xhr, status, error) {
                         console.error("Error", error);
+                        showErrorModal("Failed to remove the book from the rental list. Please try again.");
                     }
                 });
             });
 
-
             $(".issue-books-button").on("click", function(e) {
-                
                 var books = [];
                 $("input[id='fee-per-day']").each(function() {
                     var selectedBookId = $(this).closest("tr").data("book-id");
@@ -81,7 +98,7 @@
                     var fee = $(this).val();
                     books.push({bookId: selectedBookId, fee: fee});
                 });
-                let url = "{{url_for('rental.issue_books', member_id=member_id)}}"
+                let url = "{{url_for('rental.issue_books', member_id=member_id)}}";
                 console.log(url);
                 $.ajax({
                     url: url,
@@ -93,14 +110,27 @@
                     },
                     error: function(xhr, status, error) {
                         console.error("Error", error);
+                        var errorMessage = "";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else {
+                            errorMessage = "Failed to issue the books. Please try again.";
+                        }
+                        showErrorModal(errorMessage);
                     }
                 });
             });
+
             $("#okayButton").on("click", function() {
                 window.location.href = "/";
             });
+
+            function showErrorModal(errorMessage) {
+                $("#errorMessage").text(errorMessage);
+                $("#errorModal").modal("show");
+            }
         });
     </script>
-    </body>
-    </html>
+</body>
+</html>
 {% endblock %}

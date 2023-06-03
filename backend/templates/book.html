@@ -1,0 +1,57 @@
+{% include "header.html" %}
+{% block body %}
+    <div class="container-fluid">
+        <h1>{{ book.title }}</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Details</h5>
+                        <div class="card-text">
+                            <p class="fs-5"><strong>Authors:</strong> {{ book.authors }}</p>
+                            <p class="fs-5"><strong>Language Code:</strong> {{ book.language_code }}</p>
+                            <p class="fs-5"><strong>Number of Pages:</strong> {{ book.num_pages }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">ISBN Codes</h5>
+                        <div class="card-text">
+                            <p class="fs-5"><strong>ISBN:</strong> {{ book.isbn }}</p>
+                            <p class="fs-5"><strong>ISBN13:</strong> {{ book.isbn13 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Ratings</h5>
+                        <div class="card-text">
+                            <p class="fs-5"><strong>Average Rating:</strong> {{ book.average_rating }}</p>
+                            <p class="fs-5"><strong>Ratings Count:</strong> {{ book.ratings_count }}</p>
+                            <p class="fs-5"><strong>Text Reviews Count:</strong> {{ book.text_reviews_count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Publication</h5>
+                        <div class="card-text">
+                            <p class="fs-5"><strong>Publisher:</strong> {{ book.publisher }}</p>
+                            <p class="fs-5"><strong>Publication Date:</strong> {{ book.publication_date }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+</body>
+</html>
+{% endblock %}

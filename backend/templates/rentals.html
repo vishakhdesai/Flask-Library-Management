@@ -79,6 +79,24 @@
         </div>
     </div>
 
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="errorMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Okay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
@@ -125,7 +143,10 @@
                         $("#totalFeeModal").modal("show");
                     },
                     error: function(error) {
-                        console.log("Error retrieving rental object:", error);
+                        var errorMessage = error.responseJSON.message;
+                        // Display error modal with error message
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
                     }
                 });
             });
@@ -156,7 +177,10 @@
                         $("#successModal").modal("show");
                     },
                     error: function(error) {
-                        console.log("Error returning book:", error);
+                        var errorMessage = error.responseJSON.message;
+                        // Display error modal with error message
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
                     }
                 });
             });
