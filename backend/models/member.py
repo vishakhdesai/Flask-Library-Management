@@ -10,3 +10,4 @@ class Member(db.Model):
     address = db.Column(db.String(100))
     outstanding_debt = db.Column(db.Integer)
     issue_list = db.Column(db.String(255))
+    books_issue_limit = db.Column(db.Integer)

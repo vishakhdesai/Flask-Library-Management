@@ -71,7 +71,7 @@ def create_member():
         if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", data["phone_number"]):
             return jsonify({"message": "Invalid phone number"}), 400
 
-        member = Member(name=data["name"], email=data["email"], phone_number=data["phone_number"], address=data["address"], outstanding_debt=data["outstanding_debt"])
+        member = Member(name=data["name"], email=data["email"], phone_number=data["phone_number"], address=data["address"], outstanding_debt=data["outstanding_debt"], books_issue_limit=5)
         db.session.add(member)
         db.session.commit()
 

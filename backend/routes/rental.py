@@ -87,10 +87,13 @@ def add_to_rental_list(member_id):
         data = request.json
         print(member_id, data)
         member = Member.query.get(member_id)
+        if(member.books_issue_limit == 0):
+            return jsonify({"message": "A member can only take five books from the library"}), 400
         if(member.issue_list == "" or member.issue_list == None):
             member.issue_list = str(data["bookId"])
         else:
             member.issue_list += "," + str(data["bookId"])
+        member.books_issue_limit -= 1
         db.session.commit()
         return jsonify({"message": "success"}), 201
     except Exception as e:
@@ -125,6 +128,7 @@ def remove_from_rental_list(member_id):
             member.issue_list = None
         else:
             member.issue_list = ",".join(bookIds)
+        member.books_issue_limit += 1
         db.session.commit()
         return jsonify({"message": "success"}), 201
     except Exception as e:
@@ -206,6 +210,7 @@ def return_book(rental_id):
         for book_rental in rental.book_rentals:
             book = Book.query.get(book_rental.book_id)
             book.quantity += 1
+            member.books_issue_limit += 1
         db.session.commit()
         return jsonify({"message": "success"}), 200
     except Exception as e:

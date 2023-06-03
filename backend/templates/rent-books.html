@@ -64,7 +64,7 @@
                             </li>
                         {% endif %}
                     {% endfor %}
-                    <li class="page-item{% if page == total_pages %} disabled{% endif %}">
+                    <li class="page-item{% if page == total_pages or total_pages == 0 %} disabled{% endif %}">
                         <a class="page-link" href="/rent-books/{{member_id}}?page={{ page + 1 }}&title={{title}}&authors={{authors}}">Next</a>
                     </li>
                 </ul>
