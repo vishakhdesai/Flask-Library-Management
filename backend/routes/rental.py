@@ -33,9 +33,6 @@ rental = Blueprint("rental", __name__)
 
 rental_schema = RentalSchema()
 
-# Create the routes
-
-
 @rental.route("/rent-books/<int:member_id>", methods=["GET"])
 def get_rent_book(member_id):
     try:
@@ -214,6 +211,7 @@ def return_book(rental_id):
         total_fee = request.json["total_fee"]
         rental.total_rent_fee = total_fee
         rental.book_returned = True
+        rental.payment = payment
         rental.end_date = request.json["return_date"]
         member = Member.query.get(rental.member_id)
         member.outstanding_debt += (total_fee - payment)
