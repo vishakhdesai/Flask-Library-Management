@@ -224,7 +224,7 @@ def return_book(rental_id):
             book.quantity += 1
             member.books_issue_limit += 1
         db.session.commit()
-        return jsonify({"message": "success"}), 200
+        return jsonify({"message": "Book(s) returned successfully!"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 

@@ -28,3 +28,4 @@ def create_app():
     app.register_blueprint(index)
     app.register_blueprint(rental)
     return app
+app = create_app()
