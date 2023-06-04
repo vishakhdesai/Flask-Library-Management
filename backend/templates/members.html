@@ -34,9 +34,10 @@
                     <th>Phone Number</th>
                     <th>Address</th>
                     <th>Outstanding Debt</th>
+                    <th>View Details</th>
                     <th>Edit</th>
                     <th>Delete</th>
-                    <th>Rent Book</th>
+                    <th>Issue Books</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,12 +48,13 @@
                         <td>{{ member.phone_number }}</td>
                         <td>{{ member.address }}</td>
                         <td>{{ member.outstanding_debt }}</td>
+                        <td><a href="/members/{{member.id}}" class="btn btn-primary">Details</a></td>
                         <td><a href="/edit-member/{{ member.id }}" class="btn btn-primary">Edit</a></td>
                         <td>
                             <button class="btn btn-danger delete-button" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
                         </td>
                         <td>
-                            <button class="btn btn-success rent-button">Rent Book</button>
+                            <button class="btn btn-success rent-button">Issue Books</button>
                         </td>
                     </tr>
                 {% endfor %}

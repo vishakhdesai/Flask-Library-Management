@@ -1,0 +1,300 @@
+{% include "header.html" %}
+{% block body %}
+    <div class="container" style="margin-top: 2rem">
+        <div class="card">
+            <div class="card-body">
+                <h1>{{ member.name }}</h1>
+                <p><strong>Email:</strong> {{ member.email }}</p>
+                <p><strong>Phone Number:</strong> {{ member.phone_number }}</p>
+                <p><strong>Address:</strong> {{ member.address }}</p>
+                <p><strong>Outstanding Debt:</strong> {{ member.outstanding_debt }}</p>
+                <p><strong>Books Currently Issued:</strong> {{ 5 - member.books_issue_limit }}</p>
+            </div>
+        </div>
+        <div class="card">
+            {% if member.rentals == [] %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            No books issued yet
+                        </h4>
+                    </div>
+                </div>
+            {% else %}
+                <div class="card-body">
+                    <h1 class="card-title">
+                        Books Issued
+                    </h1>
+                </div>
+            {% endif %}
+            {% for rental in member.rentals %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ rental.member.name }}</h5>
+                        <p class="card-text"> Issue Date - {{ rental.start_date }}</p>
+                        <div class="card-text">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Book Title</th>
+                                        <th>Author</th>
+                                        <th>Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for book_rental in rental.book_rentals %}
+                                        <tr>
+                                            <td>{{ book_rental.book.title }}</td>
+                                            <td>{{ book_rental.book.authors }}</td>
+                                            <td>₹{{ book_rental.rent_fee }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-text">
+                            {% if not rental.book_returned %}
+                                <form data-rental-id="{{ rental.id }}">
+                                    <div class="form-group">
+                                        <label for="return_date">Return Date:</label>
+                                        <input type="date" class="form-control" id="return_date" name="return_date" onchange="enableReturnButton(this)">
+                                    </div>
+                                    <button type="button" class="btn btn-primary return-button" disabled>Return Book(s)</button>
+                                </form>
+                            {% else %}
+                                <div class="card">
+                                    <div class="card-body">
+                                        <p>Return Date: {{rental.end_date}}</p> 
+                                        <p>Total Fee: ₹{{rental.total_rent_fee}}</p> 
+                                        <p>Payment Made: ₹{{rental.payment}}</p> 
+                                        {% if rental.payment < rental.total_rent_fee %}
+                                            <button class="btn btn-primary" id="make-payment-btn" data-rental-id="{{ rental.id }}" data-payment-remaining="{{rental.total_rent_fee - rental.payment}}">Make Payment</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+
+    </div>
+        <!-- Modal -->
+        <div class="modal fade" id="totalFeeModal" tabindex="-1" aria-labelledby="totalFeeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="totalFeeModalLabel">Total Fee: <span id="totalFeeAmount"></span></h5>
+                        <p hidden><span id="rental_id"></span></p>
+                        <p hidden><span id="book_return_date"></span></p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="paymentModal" class="form-label">Payment Amount:</label>
+                            <input type="number" class="form-control" id="paymentModal" name="paymentModal" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary return-book-button">Return Book(s)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Make Payment Modal -->
+        <div class="modal fade" id="makePaymentModal" tabindex="-1" aria-labelledby="makePaymentModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="makePaymentModalLabel">Payment Remaining: <span id="paymentRemaining"></span></h5>
+                        <p hidden><span id="make-payment-rental-id"></span></p>
+                        <p hidden><span id="paymentDone"></span></p>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="makePaymentModalInput" class="form-label">Payment Amount:</label>
+                            <input type="number" class="form-control" id="makePaymentModalInput" name="makePaymentModalInput" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary make-payment-button">Make Payment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Modal -->
+        <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="successModalLabel"><span id="successMessage"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="location.reload()">Okay</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!-- Error Modal -->
+        <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="errorMessage"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Okay</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
+    <script src="{{url_for('static', filename = 'js/app.min.js')}}"></script>
+    <script src="{{url_for('static', filename = 'libs/simplebar/dist/simplebar.js')}}"></script>
+    <script>
+        function enableReturnButton(select) {
+            var returnButton = $(select).closest("form").find(".return-button");
+            returnButton.prop("disabled", !select.value);  // Enable button if value is selected
+        }
+
+        $(document).ready(function() {
+            $(".return-button").on("click", function(e) {
+                var form = $(this).closest("form");
+                var rentalId = form.data("rental-id");
+                var returnDate = form.find("#return_date").val();
+                var payment = form.find("#payment").val();
+
+                $.ajax({
+                    url: "/calculate-total-fee/" + rentalId,
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({return_date: returnDate}),
+                    success: function(response) {
+                        var totalFee = response.total_fee;
+                        var memberOutstandingDebt = response.member_outstanding_debt;
+                        var paymentModalInput = $("#paymentModal");
+                        paymentModalInput.val("");  
+
+                        if (totalFee > 500) {
+                            var minimumAmount = totalFee - 500;
+                            paymentModalInput.attr("min", minimumAmount);
+                            paymentModalInput.val(minimumAmount);
+                        } else {
+                            paymentModalInput.attr("min", 0);
+                            paymentModalInput.val(0);
+                        }
+                        paymentModalInput.attr("max", totalFee);
+                        // Display total fee in the modal
+                        $("#totalFeeAmount").text(totalFee);
+                        $("#book_return_date").val(returnDate)
+                        $("#rental_id").val(rentalId)
+
+                        // Show the modal
+                        $("#totalFeeModal").modal("show");
+                    },
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        // Display error modal with error message
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
+                    }
+                });
+            });
+
+            $(".return-book-button").on("click", function(e) {
+                var rentalId = $("#rental_id").val();
+                var payment = parseFloat($("#paymentModal").val());
+                var paymentModalInput = $("#paymentModal");
+                var returnDate = $("#book_return_date").val();
+                var minPayment = parseFloat(paymentModalInput.attr("min"));
+                var maxPayment = parseFloat(paymentModalInput.attr("max"));
+                var paymentValue = parseFloat(paymentModalInput.val());
+
+                if (paymentValue < minPayment || paymentValue > maxPayment) {
+                    return;
+                }
+                // Make an API request to return the book with rentalId and payment amount
+                $.ajax({
+                    url: "/return-book/" + rentalId,
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({payment: payment, total_fee: maxPayment, return_date: returnDate}),
+                    success: function(response) {
+                        console.log(response);
+                        $("#totalFeeModal").modal("hide");
+                        $("#successMessage").text(response.message)
+                        $("#successModal").modal("show");
+                    },
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        // Display error modal with error message
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
+                    }
+                });
+
+            });
+
+            $("#make-payment-btn").on("click", function(e) {
+                var rentalId = $(this).data("rental-id");
+                var paymentRemaining = $(this).data("payment-remaining");
+                var makePaymentModalInput = $("#makePaymentModalInput");
+                console.log(rentalId);
+                console.log(paymentRemaining);
+                $("#make-payment-rental-id").val(rentalId);
+                $("#paymentRemaining").text(paymentRemaining);
+                makePaymentModalInput.attr("min", 0);
+                makePaymentModalInput.attr("max", paymentRemaining);
+                $("#makePaymentModal").modal("show");
+            });
+
+            $(".make-payment-button").on("click", function(e) {
+                var rentalId = $("#make-payment-rental-id").val();
+                var makePaymentModalInput = $("#makePaymentModalInput")
+                var minPayment = parseFloat(makePaymentModalInput.attr("min"));
+                var maxPayment = parseFloat(makePaymentModalInput.attr("max"));
+                var paymentMade = parseFloat(makePaymentModalInput.val());
+
+                if (paymentMade < minPayment || paymentMade > maxPayment) {
+                    return;
+                }
+                $.ajax({
+                    url: "/make-payment/" + rentalId,
+                    method: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({payment: paymentMade}),
+                    success: function(response) {
+                        console.log(response);
+                        $("#makePaymentModal").modal("hide");
+                        $("#successMessage").text(response.message);
+                        $("#successModal").modal("show");
+                    },
+                    error: function(error) {
+                        var errorMessage = error.responseJSON.message;
+                        $("#errorMessage").text(errorMessage);
+                        $("#errorModal").modal("show");
+                    }
+                });
+
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

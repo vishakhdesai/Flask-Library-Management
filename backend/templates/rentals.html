@@ -6,7 +6,11 @@
         <div class="card mb-3">
             <div class="card-body">
                 <h4 class="card-title">
-                    No books issued yet
+                    {% if returned %}
+                        No books returned yet!
+                    {% else %}
+                        No pending book returns!
+                    {% endif %}
                 </h4>
             </div>
         </div>

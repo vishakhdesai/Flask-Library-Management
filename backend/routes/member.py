@@ -25,9 +25,20 @@ def get_members():
     try:
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
-        members = Member.query.paginate(page=page, per_page=per_page)
+        name = request.args.get('name')
+        email = request.args.get('email')
+        if name and email:
+            members = Member.query.filter(Member.name.contains(name) & Member.email.contains(email)).paginate(page=page, per_page=per_page) 
+        elif name:
+            members = Member.query.filter(Member.name.contains(name)).paginate(page=page, per_page=per_page)
+        elif email:
+            members = Member.query.filter(Member.email.contains(email)).paginate(page=page, per_page=per_page)
+        else:
+            members = Member.query.order_by(Member.id).paginate(page=page, per_page=per_page)
         total_pages = members.pages
-        return render_template('members.html', members=members, total_pages=total_pages), 200
+        name = request.args.get('name', '')
+        email = request.args.get('email', '')
+        return render_template('members.html', members=members, total_pages=total_pages, name=name, email=email), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -41,7 +52,7 @@ def get_member(id):
         member = Member.query.get(id)
         if not member:
             return render_template("404.html"), 404
-        return jsonify(member_schema.dump(member)), 200
+        return render_template("member.html", member=member), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
@@ -113,6 +124,23 @@ def update_member(id):
         return jsonify({"message": "Member updated successfully"}), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
+@member.route("/make-payment/<int:rentalId>", methods=["POST"])
+def make_payment(rentalId):
+    try:
+        rental = Rental.query.get(rentalId)
+        member = Member.query.get(rental.member_id)
+        payment = int(request.json["payment"])
+        if(rental.payment):
+            rental.payment += payment
+        else:
+            rental.payment = payment
+        member.outstanding_debt -= payment
+        db.session.commit()
+        return jsonify({"message": "Payment Success"}), 200
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+        
 
 @member.route("/members/<int:id>", methods=["DELETE"])
 def delete_member(id):

@@ -82,7 +82,7 @@ def get_books():
         elif authors:
             books = Book.query.filter(Book.authors.contains(authors)).paginate(page=page, per_page=per_page)
         else:
-            books = Book.query.paginate(page=page, per_page=per_page)
+            books = Book.query.order_by(Book.id).paginate(page=page, per_page=per_page)
             
         total_pages = books.pages
         books = book_schema.dump(books.items, many=True)
