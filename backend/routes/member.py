@@ -6,20 +6,39 @@ from ..extensions import db
 from ..models.member import Member
 from ..models.rental import Rental
 
-# Create the marshmallow schema
 class MemberSchema(schema.Schema):
     class Meta:
         model = Member
         fields = ("id", "name", "email", "phone_number", "address", "outstanding_debt")
 
-# Create the blueprint
 member = Blueprint("member", __name__)
 
-# Create the marshmallow instance
 member_schema = MemberSchema()
 
-# Create the routes
-
+def validate_member(member_details:dict):
+    fields = ["name", "email"]
+    invalid = []
+    for field in fields:
+        if not member_details.get(field):
+            invalid.append(field)
+            continue
+        if field == "email":
+            if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', member_details.get(field)):
+                invalid.append(field)
+        if field == "phone_number":
+            if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", member_details.get(field)):
+                invalid.append(field)
+    if member_details.get("phone_number"):
+        if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", member_details.get(field)):
+            invalid.append(field)
+    if len(invalid) > 0:
+        msg = ",".join(invalid)
+        msg = f"Field(s) {msg} is/are invalid!"
+        return False, msg
+    else:
+        return True, ""
+        
+    
 @member.route("/members", methods=["GET"])
 def get_members():
     try:
@@ -59,7 +78,7 @@ def get_member(id):
 @member.route("/edit-member/<int:member_id>", methods=["GET"])
 def get_edit_member(member_id):
     try:
-        member = Member.query.get_or_404(member_id)
+        member = Member.query.get(member_id)
         return render_template("add-member.html", is_edit=True, member=member), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
@@ -68,20 +87,9 @@ def get_edit_member(member_id):
 def create_member():
     try:
         data = request.json
-        if not data.get("name"):
-            return jsonify({"message": "Name is required"}), 400
-        if not data.get("email"):
-            return jsonify({"message": "Email is required"}), 400
-        if not data.get("phone_number"):
-            return jsonify({"message": "Phone number is required"}), 400
-        if not data.get("address"):
-            return jsonify({"message": "Address is required"}), 400
-
-        if not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', data["email"]):
-            return jsonify({"message": "Invalid email address"}), 400
-
-        if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", data["phone_number"]):
-            return jsonify({"message": "Invalid phone number"}), 400
+        valid, msg = validate_member(data)
+        if not valid:
+            return jsonify({"message": msg}), 400
 
         member = Member(name=data["name"], email=data["email"], phone_number=data["phone_number"], address=data["address"], outstanding_debt=data["outstanding_debt"], books_issue_limit=5)
         db.session.add(member)
@@ -99,20 +107,9 @@ def update_member(id):
             return render_template("404.html"), 404
 
         data = request.json
-        if not data.get("name"):
-            return jsonify({"message": "Name is required"}), 400
-        if not data.get("email"):
-            return jsonify({"message": "Email is required"}), 400
-        if not data.get("phone_number"):
-            return jsonify({"message": "Phone number is required"}), 400
-        if not data.get("address"):
-            return jsonify({"message": "Address is required"}), 400
-
-        if not re.match(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,6}$', data["email"]):
-            return jsonify({"message": "Invalid email address"}), 400
-
-        if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", data["phone_number"]):
-            return jsonify({"message": "Invalid phone number"}), 400
+        valid, msg = validate_member(data)
+        if not valid:
+            return jsonify({"message": msg}), 400
 
         member.name = data["name"]
         member.email = data["email"]
@@ -131,7 +128,7 @@ def make_payment(rentalId):
         rental = Rental.query.get(rentalId)
         member = Member.query.get(rental.member_id)
         payment = int(request.json["payment"])
-        if(rental.payment):
+        if rental.payment:
             rental.payment += payment
         else:
             rental.payment = payment

@@ -3,18 +3,8 @@
 {% include "header.html" %}
 
 {% block body %}
-    <div class="container" style="margin-top: 2rem;">
+    <div class="container-fluid">
         <h1>Library Members</h1>
-        {% if members.total == 0 %}
-        <div class="card mb-3">
-            <div class="card-body">
-                <h4 class="card-title">
-                    No Members added yet
-                </h4>
-                <a href="/add-member" class="btn btn-primary">Add Member</a>
-            </div>
-        </div>
-        {% else %}
         <form action="/members" method="get">
             <table>
                 <thead>
@@ -26,6 +16,16 @@
                 </thead>
             </table>
         </form>
+        {% if members.total == 0 %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">
+                    No Member found
+                </h4>
+                <a href="/add-member" class="btn btn-primary">Add Member</a>
+            </div>
+        </div>
+        {% else %}
         <table class="table table-bordered">
             <thead>
                 <tr>
@@ -116,6 +116,8 @@
             </div>
         </div>
     </div>
+</div>
+</div>
     <script src="{{ url_for('static', filename='libs/jquery/dist/jquery.min.js') }}"></script>
     <script src="{{ url_for('static', filename='libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sidebarmenu.js') }}"></script>

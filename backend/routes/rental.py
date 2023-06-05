@@ -54,7 +54,7 @@ def get_rent_book(member_id):
         member = Member.query.get(member_id)
         in_list_book_ids = []
         is_book_selected = True
-        if(member.issue_list == "" or member.issue_list == None):
+        if member.issue_list == "" or member.issue_list == None:
             is_book_selected = False
         else:
             in_list_book_ids = member.issue_list.split(',')
@@ -64,15 +64,9 @@ def get_rent_book(member_id):
             for book_rental in rental.book_rentals:
                 issued_books_ids.append(str(book_rental.book_id))
         for book in books:
-            if str(book["id"]) in in_list_book_ids:
-                book["is_in_list"] = True
-                book["is_issued"] = False
-            elif str(book["id"]) in issued_books_ids:
-                book["is_in_list"] = False
-                book["is_issued"] = True
-            else:
-                book["is_in_list"] = False
-                book["is_issued"] = False
+            book_id = str(book["id"])
+            book["is_in_list"] = book_id in in_list_book_ids
+            book["is_issued"] = book_id in issued_books_ids
         title = request.args.get("title", "")
         authors = request.args.get("authors", "")
         return render_template("rent-books.html", books=books, title=title, authors=authors, total_pages=total_pages, member_id=member_id, is_book_selected=is_book_selected), 200
@@ -85,9 +79,9 @@ def add_to_rental_list(member_id):
         data = request.json
         print(member_id, data)
         member = Member.query.get(member_id)
-        if(member.books_issue_limit == 0):
+        if member.books_issue_limit == 0:
             return jsonify({"message": "A member can only take five books from the library"}), 400
-        if(member.issue_list == "" or member.issue_list == None):
+        if member.issue_list == "" or member.issue_list == None:
             member.issue_list = str(data["bookId"])
         else:
             member.issue_list += "," + str(data["bookId"])
@@ -102,13 +96,10 @@ def get_checkout(member_id):
     try:
         member = Member.query.get(member_id)
         issue_books = []
-        if(member.issue_list):
-            book_ids = member.issue_list.split(',')
-        else:
+        if not member.issue_list:
             return get_rent_book(member_id)
-        for book_id in book_ids:
-            book = Book.query.get(book_id)
-            issue_books.append(book)
+        book_ids = member.issue_list.split(',')
+        issue_books = Book.query.filter(Book.id.in_(book_ids)).all()
         return render_template("checkout.html", books=issue_books, member_id=member_id)
     except Exception as e:
         return jsonify({"message": str(e)}), 500
@@ -139,15 +130,21 @@ def issue_books(member_id):
         member = Member.query.get(member_id)
         if(member.outstanding_debt >= 500):
             return jsonify({"message": "Member's Outstanding Debt is more than ₹500"}), 400
-        books = []
         data = request.json
-        for b in data["books"]:
-            book = Book.query.get(b["bookId"])
-            if(book.quantity == 0):
-                msg = "Book titled: " + book.title + " is currently out of stock"
-                return jsonify(msg), 400
-            books.append((book, int(b["fee"])))
+        book_ids = [b["bookId"] for b in data["books"]]
+        books = Book.query.filter(Book.id.in_(book_ids)).all()
 
+        out_of_stock_books = []
+        books_with_fee = []
+        for book, b in zip(books, data["books"]):
+            if book.quantity == 0:
+                out_of_stock_books.append(book.title)
+            else:
+                books_with_fee.append((book, b["fee"]))
+        if out_of_stock_books:
+            msg = "Books currently out of stock: " + ", ".join(out_of_stock_books)
+            return jsonify(msg), 400
+        books = books_with_fee
         rental = Rental(
             member_id=member_id,
             start_date=date.today(),
@@ -156,14 +153,16 @@ def issue_books(member_id):
         )
         print(rental)
         db.session.add(rental)
+        book_rentals = []
         for book in books:
             book_rental = BookRental(
                 book_id=book[0].id,
                 rent_fee=book[1],
                 rental=rental
             )
-            db.session.add(book_rental)
+            book_rentals.append(book_rental)
             book[0].quantity -= 1
+        db.session.add_all(book_rentals)
         member.issue_list = None
         db.session.commit()
         return jsonify({"message": "Success"}), 200
@@ -219,8 +218,9 @@ def return_book(rental_id):
             extra_payment = member.outstanding_debt - 500
             msg = "Extra Payment of ₹" + extra_payment + "is necessary to keep outstanding debt of member less than 500"
             return jsonify({"message": msg}), 400
-        for book_rental in rental.book_rentals:
-            book = Book.query.get(book_rental.book_id)
+        book_ids = [book_rental.book_id for book_rental in rental.book_rentals]
+        books = Book.query.filter(Book.id.in_(book_ids)).all()
+        for book in books:
             book.quantity += 1
             member.books_issue_limit += 1
         db.session.commit()
@@ -234,63 +234,5 @@ def get_rental(id):
     try:
         rental = Rental.query.get(id)
         return jsonify(rental_schema.dump(rental))
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
-
-
-@rental.route("/rentals", methods=["POST"])
-def create_rental():
-    try:
-        data = request.json
-        # Validate the data
-        if not data["book_id"]:
-            return jsonify({"message": "Book ID is required"}), 400
-        if not data["member_id"]:
-            return jsonify({"message": "Member ID is required"}), 400
-        if not data["start_date"]:
-            return jsonify({"message": "Start date is required"}), 400
-        if not data["end_date"]:
-            return jsonify({"message": "End date is required"}), 400
-
-        rental = Rental(book_id=data["book_id"], member_id=data["member_id"], start_date=data["start_date"], end_date=data["end_date"])
-        db.session.add(rental)
-        db.session.commit()
-        return jsonify(rental_schema.dump(rental)), 201
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
-
-
-@rental.route("/rentals/<int:id>", methods=["PUT"])
-def update_rental(id):
-    try:
-        data = request.json
-        # Validate the data
-        if not data["book_id"]:
-            return jsonify({"message": "Book ID is required"}), 400
-        if not data["member_id"]:
-            return jsonify({"message": "Member ID is required"}), 400
-        if not data["start_date"]:
-            return jsonify({"message": "Start date is required"}), 400
-        if not data["end_date"]:
-            return jsonify({"message": "End date is required"}), 400
-
-        rental = Rental.query.get(id)
-        rental.book_id = data["book_id"]
-        rental.member_id = data["member_id"]
-        rental.start_date = data["start_date"]
-        rental.end_date = data["end_date"]
-        db.session.commit()
-        return jsonify(rental_schema.dump(rental))
-    except Exception as e:
-        return jsonify({"message": str(e)}), 500
-
-
-@rental.route("/rentals/<int:id>", methods=["DELETE"])
-def delete_rental(id):
-    try:
-        rental = Rental.query.get(id)
-        db.session.delete(rental)
-        db.session.commit()
-        return jsonify({"message": "Rental deleted"})
     except Exception as e:
         return jsonify({"message": str(e)}), 500

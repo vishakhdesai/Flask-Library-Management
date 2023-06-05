@@ -2,7 +2,7 @@
 {% set total_pages = total_pages %}
 {% include "header.html" %}
 {% block body %}
-    <div class="container" style="margin-top: 2rem;">
+    <div class="container-fluid">
         <h1>Rent Books</h1>
         <form action="/rent-books/{{member_id}}" method="get">
             <table>
@@ -107,6 +107,8 @@
             </div>
         </div>
     </div>
+</div>
+</div>
     <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>
