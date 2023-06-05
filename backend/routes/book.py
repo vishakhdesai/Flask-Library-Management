@@ -24,16 +24,24 @@ book = Blueprint("book", __name__)
 book_schema = BookSchema()
 
 def validate_book(book:dict):
-    fields = ["title","authors","language_code","num_pages","publisher","quantity","publication_date","average_rating","ratings_count","text_reviews_count"]
-    invalid = []
+    labels = {
+        "title": "Title",
+        "authors":"Authors",
+        "language_code": "Language Code",
+        "num_pages": "Number of pages",
+        "publisher": "Publisher",
+        "quantity": "Quantity",
+        "publication_date": "Publication Date",
+    }
+    fields = ["title","authors","language_code","num_pages","publisher","quantity","publication_date"]
+    required = []
     for field in fields:
         if not book.get(field):
-            invalid.append(field)
-            continue
+            required.append(labels[field])
 
-    if len(invalid) > 0:
-        msg = ",".join(invalid)
-        msg = f"Field(s) {msg} is/are invalid!"
+    if len(required) > 0:
+        msg = ",".join(required)
+        msg = f"Field(s): {msg} is/are required!"
         return False, msg
     else:
         return True, ""
@@ -169,9 +177,6 @@ def update_book(id):
         book.publisher = data["publisher"]
         book.quantity = int(data["quantity"])
         book.publication_date = data["publication_date"]
-        book.average_rating = float(data["average_rating"])
-        book.ratings_count = int(data["ratings_count"])
-        book.text_reviews_count = int(data["text_reviews_count"])
         
         db.session.commit()
         return jsonify(book_schema.dump(book)), 200

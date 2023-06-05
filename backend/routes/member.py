@@ -16,24 +16,26 @@ member = Blueprint("member", __name__)
 member_schema = MemberSchema()
 
 def validate_member(member_details:dict):
+    labels = {"name": "Name", "email": "Email", "phone_number":"Phone Number"}
     fields = ["name", "email"]
+    required = []
     invalid = []
     for field in fields:
         if not member_details.get(field):
-            invalid.append(field)
+            required.append(labels[field])
             continue
-        if field == "email":
-            if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', member_details.get(field)):
-                invalid.append(field)
-        if field == "phone_number":
-            if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", member_details.get(field)):
-                invalid.append(field)
+    if required:
+        msg = ",".join(required)
+        msg = f"Field(s): {msg} is/are required!"
+        return False, msg
+    if not re.match(r'^[\w\.-]+@[\w\.-]+\.\w+$', member_details.get("email")):
+        invalid.append(labels["email"])
     if member_details.get("phone_number"):
-        if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", member_details.get(field)):
-            invalid.append(field)
+        if not re.match(r"^(?:\+?1)?[-.\s]?\(?\d{3}?\)?[-.\s]?\d{3}[-.\s]?\d{4}$", member_details.get("phone_number")):
+            invalid.append(labels["phone_number"])
     if len(invalid) > 0:
         msg = ",".join(invalid)
-        msg = f"Field(s) {msg} is/are invalid!"
+        msg = f"Field(s): {msg} is/are invalid!"
         return False, msg
     else:
         return True, ""
