@@ -91,13 +91,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                There was an error updating the book. Please try again later.
+                <span id="errorMessage"></span>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
             </div>
         </div>
     </div>
+</div>
+</div>
 </div>
 </div>
 <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
@@ -130,11 +132,11 @@
                 data: JSON.stringify({book: formData, quantity: quantity}),
                 contentType: "application/json",
                 success: function(response) {
-                    // Show success modal
                     $("#updateModal").modal("show");
                 },
-                error: function(xhr, status, error) {
-                    // Show error modal
+                error: function(error) {
+                    var errorMessage = error.responseJSON.message;
+                    $("#errorMessage").text(errorMessage);
                     $("#errorModal").modal("show");
                 }
             });

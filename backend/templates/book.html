@@ -1,6 +1,6 @@
 {% include "header.html" %}
 {% block body %}
-    <div class="container" style="margin-top: 2rem;">
+    <div class="container-fluid">
         <h1>{{ book.title }}</h1>
         <div class="row">
             <div class="col-md-6">
@@ -47,6 +47,8 @@
             </div>
         </div>
     </div>
+</div>
+</div>
     <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
     <script src="{{url_for('static', filename = 'js/sidebarmenu.js')}}"></script>

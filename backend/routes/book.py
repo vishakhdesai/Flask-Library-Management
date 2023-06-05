@@ -1,6 +1,7 @@
 import requests
 import ast
 import json
+from urllib.parse import urlencode
 from datetime import datetime
 from flask import Blueprint, jsonify, request, render_template, redirect, request
 from flask_marshmallow import Marshmallow
@@ -8,8 +9,6 @@ from marshmallow_sqlalchemy import schema
 from ..extensions import db
 from ..models.book import Book
 
-
-# Create the marshmallow schema
 
 class BookSchema(schema.Schema):
     class Meta:
@@ -20,16 +19,24 @@ class BookSchema(schema.Schema):
             "publication_date", "publisher", "quantity"
         )
 
-
-# Create the blueprint
-
 book = Blueprint("book", __name__)
-
-# Create the marshmallow instance
 
 book_schema = BookSchema()
 
-# Create the routes
+def validate_book(book:dict):
+    fields = ["title","authors","language_code","num_pages","publisher","quantity","publication_date","average_rating","ratings_count","text_reviews_count"]
+    invalid = []
+    for field in fields:
+        if not book.get(field):
+            invalid.append(field)
+            continue
+
+    if len(invalid) > 0:
+        msg = ",".join(invalid)
+        msg = f"Field(s) {msg} is/are invalid!"
+        return False, msg
+    else:
+        return True, ""
 
 @book.route('/import-books', methods=["GET"])
 def import_books():
@@ -39,30 +46,30 @@ def import_books():
         page = request.args.get("page", 1)
         
         # Make a request to the API.
-        title_req = "&title=" + title
-        authors_req = "&authors=" + authors
+        params = {
+            'title': title,
+            'authors': authors,
+            'page': page
+        }
+        encoded_params = urlencode(params)
         response = requests.get(
-            "https://frappe.io/api/method/frappe-library?page={}{}{}".format(
-                page, title_req, authors_req
+            "https://frappe.io/api/method/frappe-library?{}".format(
+                encoded_params
             )
         )
 
-        # Check the response status code.
         if response.status_code != 200:
             return jsonify({"message": "Error fetching books from API"}), 500
 
-        # Get the books from the response.
-        books = response.json()
-        books = books["message"]
+        books = response.json()["message"]
         existing_book_ids = [book.bookID for book in Book.query.all()] 
         
         for book in books:
             if book['bookID'] in existing_book_ids:
-                book['exists_in_database'] = True  # Add a field to indicate if the book exists in the database
+                book['exists_in_database'] = True 
             else:
                 book['exists_in_database'] = False
 
-        # Render the template with the books.
         return render_template("import-books.html", books=books, title=title, authors=authors), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
@@ -109,30 +116,10 @@ def create_books():
         data = request.json
         data = [ast.literal_eval(item) for item in data]
         
-        # Validate the data
         if not data:
             return jsonify({"message": "No data was provided"}), 400
         
         for book in data:
-            if not book["bookID"]:
-                return jsonify({"message": "bookID is required"}), 400
-            if not book["title"]:
-                return jsonify({"message": "Title is required"}), 400
-            if not book["authors"]:
-                return jsonify({"message": "Authors is required"}), 400
-            if not book["isbn"]:
-                return jsonify({"message": "ISBN is required"}), 400
-            if not book["isbn13"]:
-                return jsonify({"message": "ISBN13 is required"}), 400
-            if not book["language_code"]:
-                return jsonify({"message": "Language code is required"}), 400
-            if not book["  num_pages"]:
-                return jsonify({"message": "Number of pages is required"}), 400
-            if not book["publication_date"]:
-                return jsonify({"message": "Publication date is required"}), 400
-            if not book["publisher"]:
-                return jsonify({"message": "Publisher is required"}), 400
-
             publication_date = datetime.strptime(book["publication_date"], "%m/%d/%Y").strftime("%Y-%m-%d")
             average_rating = float(book["average_rating"])
             ratings_count = int(book["ratings_count"])
@@ -165,7 +152,10 @@ def create_books():
 def update_book(id):
     try:
         book_data = request.json
-        data = ast.literal_eval(book_data["book"])
+        data = json.loads(book_data["book"])
+        valid, msg = validate_book(data)
+        if not valid:
+            return jsonify({"message": msg}), 400
         data["quantity"] = book_data["quantity"]
 
         book = Book.query.get(id)

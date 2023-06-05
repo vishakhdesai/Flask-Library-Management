@@ -56,7 +56,7 @@
                 The member has been {{ "updated" if is_edit else "added" }} successfully.
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                <button type="button" class="btn btn-primary" id="successOkayButton" data-bs-dismiss="modal">OK</button>
             </div>
         </div>
     </div>
@@ -69,13 +69,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                There was an error {{ "updating" if is_edit else "adding" }} the member. Please try again later.
+                <span id="errorMessage"></span>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
             </div>
         </div>
     </div>
+</div>
+</div>
 </div>
 <script src="{{url_for('static', filename = 'libs/jquery/dist/jquery.min.js')}}"></script>
 <script src="{{url_for('static', filename = 'libs/bootstrap/dist/js/bootstrap.bundle.min.js')}}"></script>
@@ -107,14 +109,18 @@
                 contentType: "application/json",
                 data: JSON.stringify(data),
                 success: function(response) {
-                    // Show success modal
                     $("#successModal").modal("show");
                 },
-                error: function(xhr, status, error) {
-                    // Show error modal
+                error: function(error) {
+                    var errorMessage = error.responseJSON.message;
+                    $("#errorMessage").text(errorMessage);
                     $("#errorModal").modal("show");
                 }
             });
+        });
+
+        $("#successOkayButton").on("click", function() {
+            window.location.href = "{{ url_for('member.get_members') }}";
         });
     });
 </script>
